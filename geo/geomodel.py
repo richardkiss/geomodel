@@ -32,6 +32,8 @@ import geomath
 import geotypes
 import util
 
+DEBUG = False
+
 DEFAULT_COST_FUNCTION = \
     lambda num_cells, resolution: 1e10000 if num_cells > \
                                   pow(geocell.GEOCELL_GRID_SIZE, 2) else 0
@@ -66,7 +68,7 @@ class GeoModel(db.Model):
     """Updates the underlying geocell properties of the entity to match the
     entity's location property. A put() must occur after this call to save
     the changes to App Engine."""
-    max_res_geocell = geocell.compute(self.location.lat, self.location.lon)
+    max_res_geocell = geocell.compute(self.location)
     for res in range(1, geocell.MAX_GEOCELL_RESOLUTION + 1):
       setattr(self, 'location_geocell_%d' % res, max_res_geocell[:res])
 
@@ -136,7 +138,8 @@ class GeoModel(db.Model):
     else:
       results = []
     
-    #logging.info('bbox query looked in %d geocells' % len(query_geocells))
+    if DEBUG:
+      logging.info('bbox query looked in %d geocells' % len(query_geocells))
     
     # In-memory filter.
     return [entity for entity in results if
@@ -164,7 +167,7 @@ class GeoModel(db.Model):
           The default is 10, and the larger this number, the longer the fetch
           will take.
       max_distance: An optional number indicating the maximum distance to
-          search.
+          search, in meters.
     
     Returns:
       The fetched entities, sorted in ascending order by distance to the search
@@ -216,7 +219,8 @@ class GeoModel(db.Model):
       
       # Update results and sort.
       new_results = temp_query.fetch(1000)
-      #logging.info('fetch complete for %s' % (','.join(cur_geocells_unique),))
+      if DEBUG:
+        logging.info('fetch complete for %s' % (','.join(cur_geocells_unique),))
       
       searched_cells.update(cur_geocells)
 
@@ -271,11 +275,13 @@ class GeoModel(db.Model):
       
       # We don't have enough items yet, keep searching.
       if len(results) < max_results:
-        #logging.debug('have %d results but want %d results, '
-        #              'continuing search' % (len(results), max_results))
+        if DEBUG:
+          logging.debug('have %d results but want %d results, '
+                        'continuing search' % (len(results), max_results))
         continue
       
-      #logging.debug('have %d results' % (len(results),))
+      if DEBUG:
+        logging.debug('have %d results' % (len(results),))
       
       # If the currently max_results'th closest item is closer than any
       # of the next test geocells, we're done searching.
@@ -283,19 +289,22 @@ class GeoModel(db.Model):
           geomath.distance(center, results[max_results - 1][0].location)
       if (closest_possible_next_result_dist >=
           current_farthest_returnable_result_dist):
-        #logging.debug('DONE next result at least %f away, '
-        #              'current farthest is %f dist' %
-        #              (closest_possible_next_result_dist,
-        #               current_farthest_returnable_result_dist))
+        if DEBUG:
+          logging.debug('DONE next result at least %f away, '
+                        'current farthest is %f dist' %
+                        (closest_possible_next_result_dist,
+                         current_farthest_returnable_result_dist))
         break
       
-      #logging.debug('next result at least %f away, '
-      #              'current farthest is %f dist' %
-      #              (closest_possible_next_result_dist,
-      #               current_farthest_returnable_result_dist))
+      if DEBUG:
+        logging.debug('next result at least %f away, '
+                      'current farthest is %f dist' %
+                      (closest_possible_next_result_dist,
+                       current_farthest_returnable_result_dist))
     
-    #logging.info('proximity query looked '
-    #             'in %d geocells' % len(searched_cells))
+    if DEBUG:
+      logging.info('proximity query looked '
+                   'in %d geocells' % len(searched_cells))
     
     return [entity for (entity, dist) in results[:max_results]
                    if not max_distance or dist < max_distance]
