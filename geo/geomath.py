@@ -16,19 +16,22 @@
 
 """Defines common geo math functions used throughout the library."""
 
+__author__ = 'api.roman.public@gmail.com (Roman Nurik)'
+
 import math
+
+import geotypes
 
 RADIUS = 6378135
 
 
 def distance(p1, p2):
-  """Calculates the great circle distance between two points using the
-  law of cosines formula.
-  
+  """Calculates the great circle distance between two points (law of cosines).
+
   Args:
     p1: A geotypes.Point or db.GeoPt indicating the first point.
     p2: A geotypes.Point or db.GeoPt indicating the second point.
-  
+
   Returns:
     The 2D great-circle distance between the two given points, in meters.
   """
@@ -36,32 +39,3 @@ def distance(p1, p2):
   p2lat, p2lon = math.radians(p2.lat), math.radians(p2.lon)
   return RADIUS * math.acos(math.sin(p1lat) * math.sin(p2lat) +
       math.cos(p1lat) * math.cos(p2lat) * math.cos(p2lon - p1lon))
-
-
-def destination(p, heading, distance):
-  """Approximates a destination point given a start point, an initial bearing,
-  and a distance.
-  
-  Args:
-    p: A geotypes.Point or db.GeoPt indicating the start point.
-    heading: The initial bearing to follow, in degrees.
-    distance: The distance to travel, in meters.
-  
-  Returns:
-    A geotypes.Point approximately <distance> away from the starting point
-    if following an initial bearing of <heading>.
-  """
-  plat = math.radians(p.lat)
-  plon = math.radians(p.lon)
-  
-  angular_distance = distance * 1.0 / RADIUS
-  heading = math.radians(heading)
-  lat2 = math.asin(math.sin(plat) * math.cos(angular_distance) + 
-                   math.cos(plat) * math.sin(angular_distance) *
-                     math.cos(heading))
-  
-  return geotypes.Point(
-      math.degrees(lat2),
-      math.degrees(math.atan2(
-          math.sin(heading) * math.sin(angular_distance) * math.cos(lat2),
-          math.cos(angular_distance) - math.sin(plat) * math.sin(lat2))) + plon)
