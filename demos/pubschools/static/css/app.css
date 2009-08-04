@@ -1,0 +1,335 @@
+/*
+Copyright 2009 Roman Nurik
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* general css patterns */
+
+strong {
+  font-weight: bold;
+}
+
+.clearfix:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+
+.clearfix {
+  zoom: 1; /* IE fix */
+}
+
+/* page globals */
+
+body {
+  font-family: helvetica, arial, sans-serif;
+  font-size: 62.5%;
+  color: #333;
+}
+
+a, a:visited, a:hover {
+  color: #00c;
+}
+
+a:active {
+  color: #f00;
+}
+
+#loading {
+  visibility: hidden;
+  position: relative;
+  right: 0;
+  top: 0.4em;
+}
+
+/* layout */
+
+#login-bar {
+  font-size: 1.3em;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ccc;
+  text-align: right;
+}
+
+#container {
+  width: 760px;
+  padding: 10px 10px 30px 10px;
+  margin: 0 auto;
+}
+
+#header {
+  position: relative;
+  padding-left: 320px;
+  margin-bottom: 0.5em;
+  min-height: 78px;
+}
+
+#logo {
+  width: 278px;
+  height: 78px;
+  background: transparent url(../images/logo.png) no-repeat scroll top left;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#logo #slogan {
+  position: absolute;
+  left: 84px;
+  top: 53px;
+  width: 194px;
+  height: 25px;
+  color: #888;
+}
+
+/* search box */
+
+#search-container {
+  padding-top: 15px;
+}
+
+#search-container p,
+#search-container input {
+  font-size: 1.3em;
+}
+
+#search-query {
+  width: 350px;
+}
+
+#search-error {
+  visibility: hidden;
+  font-size: 1.0em;
+  color: #a00;
+  font-weight: bold;
+}
+
+#advanced-options-container {
+  margin-top: 5px;
+  width: 400px;
+  position: relative;
+}
+
+#advanced-options-toggle {
+  font-size: 1.0em;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#advanced-options {
+  display: none;
+  border: 2px solid #0a3;
+  background-color: #afb;
+  margin-top: 3px;
+  padding: 10px;
+  
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+
+#advanced-options label,
+#advanced-options input,
+#advanced-options select {
+  font-size: 1.3em;
+}
+
+#advanced-options .row {
+  position: relative;
+  padding-left: 10em;
+  height: 2.0em;
+}
+
+#advanced-options label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10em;
+}
+
+#search-grade-display {
+  float: left;
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #080;
+}
+
+#search-grade-slider {
+  width: 100px;
+  margin-right: 1.5em;
+  float: left;
+}
+
+/* view toggle */
+
+#view-toggle {
+  font-size: 1.3em;
+  margin-bottom: 0.5em;
+  text-align: right;
+}
+
+/* main page content */
+
+#content {
+  position: relative;
+}
+
+#content #list-view-container {
+  display: none;
+}
+
+#content #map-container {
+  border: 1px solid #aaa;
+  height: 500px;
+  overflow: hidden;
+}
+
+#content #map {
+  height: 100%;
+}
+
+/* content in list view */
+
+#content.list-view {
+  padding-right: 300px;
+  min-height: 250px;
+}
+
+#content.list-view #list-view-container {
+  display: block;
+}
+
+#content.list-view #list-view-status {
+  font-size: 1.3em;
+  margin-bottom: 1em;
+}
+
+#content.list-view #map-container {
+  width: 250px;
+  height: 250px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+/* marker info window */
+
+.result-info-window h2 {
+  color: #333;
+  font-weight: bold;
+  font-size: 1.8em;
+  margin-bottom: 0.5em;
+  padding-top: 0.5em;
+  position: relative;
+}
+
+.result-info-window h2,
+.result-info-window .details {
+  padding-left: 25px;
+}
+
+.result-info-window address,
+.result-info-window p,
+.result-info-window ul {
+  font-size: 1.3em;
+  margin-bottom: 0.5em;
+}
+
+.result-info-window .distance {
+  color: #888;
+}
+
+.result-info-window h2 img {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.result-info-window li {
+  position: relative;
+  padding-left: 8em;
+  margin-bottom: 0.5em;
+}
+
+.result-info-window li .label {
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* list view items */
+
+#list-view li.result {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+
+#list-view li.result h2 {
+  color: #333;
+  font-weight: bold;
+  font-size: 1.3em;
+  margin-bottom: 0.5em;
+  position: relative;
+}
+
+#list-view li.result h2,
+#list-view li.result .details {
+  padding-left: 30px;
+}
+
+#list-view li.result address,
+#list-view li.result p,
+#list-view li.result ul {
+  font-size: 1.3em;
+  margin-bottom: 0.5em;
+}
+
+#list-view li.result .distance {
+  color: #888;
+}
+
+#list-view li.result h2 img {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#list-view li.result li {
+  position: relative;
+  padding-left: 8em;
+}
+
+#list-view li.result li .label {
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* footer */
+
+#footer {
+  margin-top: 30px;
+  font-size: 1.2em;
+  color: #888;
+}
+
+#footer p {
+  margin-bottom: 1.2em;
+}
