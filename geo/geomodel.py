@@ -50,21 +50,7 @@ class GeoModel(db.Model):
         associated with this entity.
   """
   location = db.GeoPtProperty(required=True)
-
-  # One for each of MAX_GEOCELL_RESOLUTION resolutions.
-  location_geocell_1  = db.StringProperty()
-  location_geocell_2  = db.StringProperty()
-  location_geocell_3  = db.StringProperty()
-  location_geocell_4  = db.StringProperty()
-  location_geocell_5  = db.StringProperty()
-  location_geocell_6  = db.StringProperty()
-  location_geocell_7  = db.StringProperty()
-  location_geocell_8  = db.StringProperty()
-  location_geocell_9  = db.StringProperty()
-  location_geocell_10 = db.StringProperty()
-  location_geocell_11 = db.StringProperty()
-  location_geocell_12 = db.StringProperty()
-  location_geocell_13 = db.StringProperty()
+  location_geocells = db.StringListProperty()
 
   def update_location(self):
     """Syncs underlying geocell properties with the entity's location.
@@ -73,8 +59,9 @@ class GeoModel(db.Model):
     entity's location property. A put() must occur after this call to save
     the changes to App Engine."""
     max_res_geocell = geocell.compute(self.location)
-    for res in range(1, geocell.MAX_GEOCELL_RESOLUTION + 1):
-      setattr(self, 'location_geocell_%d' % res, max_res_geocell[:res])
+    self.location_geocells = [max_res_geocell[:res]
+                              for res in
+                              range(1, geocell.MAX_GEOCELL_RESOLUTION + 1)]
 
   @staticmethod
   def bounding_box_fetch(query, bbox, max_results=1000,
@@ -115,8 +102,7 @@ class GeoModel(db.Model):
         # NOTE(romannurik): since 'IN' queries seem boken in App Engine,
         # manually search each geocell and then merge results in-place
         cell_results = [copy.deepcopy(query)
-            .filter('location_geocell_%d =' % len(search_cell),
-                    search_cell)
+            .filter('location_geocells =', search_cell)
             .fetch(max_results) for search_cell in query_geocells]
 
         # Manual in-memory sort on the query's defined ordering.
@@ -133,14 +119,11 @@ class GeoModel(db.Model):
         util.merge_in_place(cmp_fn=_ordering_fn, *cell_results)
         results = cell_results[0][:max_results]
       else:
-        search_resolution = len(query_geocells[0])
-
         # NOTE: We can't pass in max_results because of non-uniformity of the
         # search.
         results = (query
-            .filter('location_geocell_%d IN' % search_resolution,
-                    query_geocells)
-            .fetch(1000))
+            .filter('location_geocells IN', query_geocells)
+            .fetch(1000))[:max_results]
     else:
       results = []
 
@@ -223,8 +206,7 @@ class GeoModel(db.Model):
       # Run query on the next set of geocells.
       cur_resolution = len(cur_geocells[0])
       temp_query = copy.deepcopy(query)  # TODO(romannurik): is this safe?
-      temp_query.filter('location_geocell_%d IN' % cur_resolution,
-                        cur_geocells_unique)
+      temp_query.filter('location_geocells IN', cur_geocells_unique)
 
       # Update results and sort.
       new_results = temp_query.fetch(1000)
