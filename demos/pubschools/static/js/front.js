@@ -97,36 +97,36 @@ function initMap() {
  * Initializes various UI features.
  */
 function initUI() {
-	$("#search-grade-slider").slider({
-	  orientation: 'horizontal',
-		min: -1,
-		max: 12,
-		range: true,
-		step: 1,
-		values: [-1, 12],
-		slide: function(event, ui) {
-		  if (ui.values[0] == ui.values[1])
-  			$("#search-grade-display").text(formatGradeLevel(ui.values[0]));
-  	  else
-  			$("#search-grade-display").text(
-  			    formatGradeLevel(ui.values[0]) + ' to ' +
-  			    formatGradeLevel(ui.values[1]));
-		},
-		change: function(event, ui) {
-		  if (!g_searchOptions)
-		    return;
-		  
-		  doSearch(updateObject(g_searchOptions, {
-		    gradeRange: (ui.values[0] != MIN_GRADE_TAUGHT ||
+  $("#search-grade-slider").slider({
+    orientation: 'horizontal',
+    min: -1,
+    max: 12,
+    range: true,
+    step: 1,
+    values: [-1, 12],
+    slide: function(event, ui) {
+      if (ui.values[0] == ui.values[1])
+        $("#search-grade-display").text(formatGradeLevel(ui.values[0]));
+      else
+        $("#search-grade-display").text(
+            formatGradeLevel(ui.values[0]) + ' to ' +
+            formatGradeLevel(ui.values[1]));
+    },
+    change: function(event, ui) {
+      if (!g_searchOptions)
+        return;
+      
+      doSearch(updateObject(g_searchOptions, {
+        gradeRange: (ui.values[0] != MIN_GRADE_TAUGHT ||
                      ui.values[1] != MAX_GRADE_TAUGHT) ? ui.values : null,
         retainViewport: true,
         clearResultsImmediately: false
-	    }));
-	  }
-	});
-	
-	$("#search-grade-display").text(
-	    formatGradeLevel(-1) + ' to ' +
+      }));
+    }
+  });
+  
+  $("#search-grade-display").text(
+      formatGradeLevel(-1) + ' to ' +
       formatGradeLevel(12));
   
   for (var type in SCHOOL_TYPES) {
@@ -136,8 +136,8 @@ function initUI() {
   }
   
   $('#search-school-type').change(function() {
-	  doSearch(updateObject(g_searchOptions, {
-	    schoolType: $(this).val(),
+    doSearch(updateObject(g_searchOptions, {
+      schoolType: $(this).val(),
       retainViewport: true,
       clearResultsImmediately: false
     }));
@@ -308,14 +308,12 @@ function doGeocodeAndSearch() {
         doSearch(updateObject(commonOptions, {
           type: 'proximity',
           centerAddress: response.Placemark[0].address,
-          center: bounds.getCenter(),
-          clearResultsImmediately: true
+          center: bounds.getCenter()
         }));
       } else {
         doSearch(updateObject(commonOptions, {
           type: 'bounds',
-          bounds: bounds,
-          clearResultsImmediately: true
+          bounds: bounds
         }));
       }
     }
@@ -377,7 +375,8 @@ function doSearch(options) {
         type: 'proximity',
         centerAddress: '', // TODO: reverse geocode?
         center: g_searchCenterMarker.getLatLng(),
-        retainViewport: true
+        retainViewport: true,
+        clearResultsImmediately: false
       }));
     });
   
