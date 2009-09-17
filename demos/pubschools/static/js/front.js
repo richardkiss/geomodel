@@ -503,7 +503,7 @@ function doSearch(options) {
       } else {
         $('#search-error, #list-view-status').text(
             'Internal error: ' + obj.error.message);
-        $('#search-error').css('visibility', 'visible');      
+        $('#search-error').css('visibility', 'visible');
       }
     }
   });

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<!---
+  Copyright 2009 Roman Nurik
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>PubSchools: GeoModel Speed Test</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+    <script type="text/javascript" src="http://www.google.com/jsapi?key={% jsapi_key %}"></script>
+    <script type="text/javascript">
+      var MILES_TO_METERS = 1609.344;
+      
+      var MAX_PROXIMITY_SEARCH_MILES = 50;
+      var MAX_PROXIMITY_SEARCH_RESULTS = 10;
+      var MAX_BOUNDS_SEARCH_RESULTS = 25;
+
+      var MIN_GRADE_TAUGHT = -1; // PK
+      var MAX_GRADE_TAUGHT = 12; // 12th grade
+
+      var geocoder;
+      google.load('maps', '2');
+      google.setOnLoadCallback(function() {
+        geocoder = new google.maps.ClientGeocoder();
+        $('input[type=button]').removeAttr('disabled');
+      });
+      
+      function runTests() {
+        runTest({
+          type: 'bounds',
+          address: '94110'
+        });
+        
+        runTest({
+          type: 'proximity',
+          address: '1600 Amphitheatre Pkwy Mountain View CA'
+        });
+      }
+      
+      function runCustomTest() {
+        runTest({
+          address: $('#address').val(),
+          type: $('#querytype').val()
+        });
+      }
+      
+      function runTest(options) {
+        
+        var continuation = function() {
+          var searchParameters = {
+            type: options.type
+          };
+
+          if (options.type == 'proximity') {
+            searchParameters = updateObject(searchParameters, {
+              lat: options.center.lat(),
+              lon: options.center.lng(),
+              maxresults: MAX_PROXIMITY_SEARCH_RESULTS,
+              maxdistance: MAX_PROXIMITY_SEARCH_MILES * MILES_TO_METERS
+            });
+          } else if (options.type == 'bounds') {
+            searchParameters = updateObject(searchParameters, {
+              north: options.bounds.getNorthEast().lat(),
+              east: options.bounds.getNorthEast().lng(),
+              south: options.bounds.getSouthWest().lat(),
+              west: options.bounds.getSouthWest().lng(),
+              maxresults: MAX_BOUNDS_SEARCH_RESULTS
+            });
+          }
+
+          // Add in advanced options.
+          if (options.gradeRange) {
+            searchParameters = updateObject(searchParameters, {
+              mingrade: options.gradeRange[0],
+              maxgrade: options.gradeRange[1]
+            });
+          }
+
+          if (options.schoolType) {
+            searchParameters.schooltype = options.schoolType;
+          }
+
+          // Perform proximity or bounds search.
+          var startTime = new Date().getTime();
+          
+          $.ajax({
+            url: '/s/search',
+            type: 'get',
+            data: searchParameters,
+            dataType: 'json',
+            error: function(xhr, textStatus) {
+              var responseTime = new Date().getTime() - startTime;
+              
+              var responseObj;
+              eval('responseObj=' + xhr.responseText);
+              logResult(options, {
+                error: 'Internal error: ' + responseObj.error.message,
+                responseTime: responseTime
+              });
+            },
+            success: function(obj) {
+              var responseTime = new Date().getTime() - startTime;
+              
+              if (obj.status && obj.status == 'success') {
+                logResult(options, {
+                  message: obj.results.length.toString(),
+                  responseTime: responseTime
+                });
+              } else {
+                logResult(options, {
+                  error: 'Internal error: ' + obj.error.message,
+                  responseTime: responseTime
+                });
+              }
+            }
+          });
+        };
+        
+        if (!options.address) {
+          continuation();
+        } else {
+          geocoder.getLocations(options.address, function(response) {
+            if (response.Status.code != 200 || !response.Placemark) {
+              logResult(options, {
+                error: 'Geocode error: ' + response.Status.code
+              });
+            } else {
+              if (options.type == 'bounds') {
+                options.bounds = new google.maps.LatLngBounds(
+                    new google.maps.LatLng(
+                      response.Placemark[0].ExtendedData.LatLonBox.south,
+                      response.Placemark[0].ExtendedData.LatLonBox.west),
+                    new google.maps.LatLng(
+                      response.Placemark[0].ExtendedData.LatLonBox.north,
+                      response.Placemark[0].ExtendedData.LatLonBox.east));
+              } else if (options.type == 'proximity') {
+                options.center = new google.maps.LatLng(
+                    response.Placemark[0].Point.coordinates[1],
+                    response.Placemark[0].Point.coordinates[0]);
+              }
+              continuation();
+            }
+          });
+        }
+      }
+      
+      function clearResults() {
+        $('tr.result').remove();
+      }
+      
+      function logResult(options, result) {
+        var paramStr = '<pre>';
+        for (var key in options) {
+          paramStr += key + ': <strong>' + options[key].toString() +
+                      '</strong><br>';
+        }
+        paramStr += '</pre>';
+        
+        var row = $('<tr class="result">')
+            .append($('<td>').html(paramStr))
+            .appendTo($('#results'));
+        
+        if (result.error) {
+          row
+            .addClass('error')
+            .append($('<td>').text(result.error));
+        } else {
+          row
+            .append($('<td>').text(result.message));
+        }
+        
+        row.append($('<td>').html('<span style="color:blue">' +
+                                  result.responseTime + 'ms</span>'));
+      }
+      
+      /**
+       * Helper method to update one object's properties with another's.
+       */
+      function updateObject(dest, src) {
+        dest = dest || {};
+        src = src || {};
+
+        for (var k in src)
+          dest[k] = src[k];
+
+        return dest;
+      }
+    </script>
+    <style type="text/css">
+      #results {
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      
+      #results td pre {
+        margin: 0;
+        padding: 0;
+      }
+      
+      #results th, #results td {
+        border: 1px solid #888;
+        padding: 2px 4px;
+        vertical-align: top;
+      }
+      
+      #results th {
+        background-color: #eee;
+      }
+      
+      #results tr.error {
+        color: #f00;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>GeoModel Speed Test</h1>
+    <hr>
+      <p><strong>Custom Query:</strong></p>
+      
+      <p>Address:
+      <input id="address" value="" style="width: 200px;"/>
+      
+      <br>Query type:
+      <select id="querytype">
+        <option value="bounds" selected="selected">Bounding Box</option>
+        <option value="proximity">Proximity</option>
+      </select>
+      
+      <br>School type:
+      <select id="schooltype">
+        <option value="" selected="selected">--</option><br>
+        <option value="1">Regular elementary or secondary school</option>
+        <option value="2">Special education school</option>
+        <option value="3">Vocational/technical school</option>
+        <option value="4">Other</option>
+      </select></p>
+      
+      <input type="button" onclick="runCustomTest();" value="Run Single Query" disabled="disabled"/>
+    <hr>
+    <input type="button" onclick="runTests();" value="Run Predefined Tests" disabled="disabled"/>
+    <input type="button" onclick="clearResults();" value="Clear" disabled="disabled"/>
+    
+    <table id="results">
+      <tr>
+        <th>Query parameters</th>
+        <th>Results</th>
+        <th>Response time</th>
+      </tr>
+    </table>
+  </body>
+</html>

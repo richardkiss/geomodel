@@ -47,6 +47,7 @@ def make_static_handler(template_file):
 def main():
   application = webapp.WSGIApplication([
       ('/', make_static_handler('../templates/index.html')),
+      ('/speedtest', make_static_handler('../templates/speedtest.html')),
       ],
       debug=('Development' in os.environ['SERVER_SOFTWARE']))
   wsgiref.handlers.CGIHandler().run(application)
