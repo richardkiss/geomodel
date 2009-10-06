@@ -49,7 +49,7 @@ class GeoModel(db.Model):
     location: A db.GeoPt that defines the single geographic point
         associated with this entity.
   """
-  location = db.GeoPtProperty(required=True)
+  location = db.GeoPtProperty()
   location_geocells = db.StringListProperty()
 
   def update_location(self):
@@ -58,10 +58,13 @@ class GeoModel(db.Model):
     Updates the underlying geocell properties of the entity to match the
     entity's location property. A put() must occur after this call to save
     the changes to App Engine."""
-    max_res_geocell = geocell.compute(self.location)
-    self.location_geocells = [max_res_geocell[:res]
-                              for res in
-                              range(1, geocell.MAX_GEOCELL_RESOLUTION + 1)]
+    if self.location:
+      max_res_geocell = geocell.compute(self.location)
+      self.location_geocells = [max_res_geocell[:res]
+                                for res in
+                                range(1, geocell.MAX_GEOCELL_RESOLUTION + 1)]
+    else:
+      self.location_geocells = []
 
   @staticmethod
   def bounding_box_fetch(query, bbox, max_results=1000,
