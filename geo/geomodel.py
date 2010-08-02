@@ -120,13 +120,9 @@ class GeoModel(db.Model):
 
         # Duplicates aren't possible so don't provide a dup_fn.
         util.merge_in_place(cmp_fn=_ordering_fn, *cell_results)
-        results = cell_results[0][:max_results]
+        results = cell_results[0]
       else:
-        # NOTE: We can't pass in max_results because of non-uniformity of the
-        # search.
-        results = (query
-            .filter('location_geocells IN', query_geocells)
-            .fetch(1000))[:max_results]
+        results = query.filter('location_geocells IN', query_geocells)
     else:
       results = []
 
@@ -134,11 +130,17 @@ class GeoModel(db.Model):
       logging.info('bbox query looked in %d geocells' % len(query_geocells))
 
     # In-memory filter.
-    return [entity for entity in results if
-        entity.location.lat >= bbox.south and
-        entity.location.lat <= bbox.north and
-        entity.location.lon >= bbox.west and
-        entity.location.lon <= bbox.east]
+    filtered_results = []
+    for entity in results:
+      if len(filtered_results) == max_results:
+        break
+      if (entity.location.lat >= bbox.south and
+          entity.location.lat <= bbox.north and
+          entity.location.lon >= bbox.west and
+          entity.location.lon <= bbox.east):
+        filtered_results.append(entity)
+
+    return filtered_results
 
   @staticmethod
   def proximity_fetch(query, center, max_results=10, max_distance=0):
