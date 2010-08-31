@@ -101,46 +101,19 @@ class GeoModel(db.Model):
     query_geocells = geocell.best_bbox_search_cells(bbox, cost_function)
 
     if query_geocells:
-      if query._Query__orderings:
-        # NOTE(romannurik): since 'IN' queries seem boken in App Engine,
-        # manually search each geocell and then merge results in-place
-        cell_results = [copy.deepcopy(query)
-            .filter('location_geocells =', search_cell)
-            .fetch(max_results) for search_cell in query_geocells]
-
-        # Manual in-memory sort on the query's defined ordering.
-        query_orderings = query._Query__orderings or []
-        def _ordering_fn(ent1, ent2):
-          for prop, direction in query_orderings:
-            prop_cmp = cmp(getattr(ent1, prop), getattr(ent2, prop))
-            if prop_cmp != 0:
-              return prop_cmp if direction == 1 else -prop_cmp
-
-          return -1  # Default ent1 < ent2.
-
-        # Duplicates aren't possible so don't provide a dup_fn.
-        util.merge_in_place(cmp_fn=_ordering_fn, *cell_results)
-        results = cell_results[0]
-      else:
-        results = query.filter('location_geocells IN', query_geocells)
-    else:
-      results = []
+      for entity in query.filter('location_geocells IN', query_geocells):
+        if len(results) == max_results:
+          break
+        if (entity.location.lat >= bbox.south and
+            entity.location.lat <= bbox.north and
+            entity.location.lon >= bbox.west and
+            entity.location.lon <= bbox.east):
+          results.append(entity)
 
     if DEBUG:
       logging.info('bbox query looked in %d geocells' % len(query_geocells))
 
-    # In-memory filter.
-    filtered_results = []
-    for entity in results:
-      if len(filtered_results) == max_results:
-        break
-      if (entity.location.lat >= bbox.south and
-          entity.location.lat <= bbox.north and
-          entity.location.lon >= bbox.west and
-          entity.location.lon <= bbox.east):
-        filtered_results.append(entity)
-
-    return filtered_results
+    return results
 
   @staticmethod
   def proximity_fetch(query, center, max_results=10, max_distance=0):
