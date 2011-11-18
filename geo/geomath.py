@@ -37,5 +37,9 @@ def distance(p1, p2):
   """
   p1lat, p1lon = math.radians(p1.lat), math.radians(p1.lon)
   p2lat, p2lon = math.radians(p2.lat), math.radians(p2.lon)
-  return RADIUS * math.acos(math.sin(p1lat) * math.sin(p2lat) +
-      math.cos(p1lat) * math.cos(p2lat) * math.cos(p2lon - p1lon))
+  # work out the internal value for the spherical law of cosines and clamp
+  # it between -1.0 and 1.0 to avoid python rounding errors
+  sloc = (math.sin(p1lat) * math.sin(p2lat) +
+          math.cos(p1lat) * math.cos(p2lat) * math.cos(p2lon - p1lon))
+  sloc = max(min(sloc, 1.0), -1.0)
+  return RADIUS * math.acos(sloc)

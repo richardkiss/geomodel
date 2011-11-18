@@ -34,6 +34,15 @@ class GeomathTests(unittest.TestCase):
     # make sure the calculated distance is within +/- 1% of known distance
     self.assertTrue(abs((calc_dist - known_dist) / known_dist) <= 0.01)
 
+  def test_distance_rounding(self):
+    # Test location that can cause math domain error (due to rounding) unless
+    # the distance function clamps the spherical law of cosines value between
+    # -1.0 and 1.0. 
+    calc_dist = geomath.distance(geotypes.Point(47.291288, 8.56613),
+                                 geotypes.Point(47.291288, 8.56613))
+    known_dist = 0.0
+    self.assertTrue(calc_dist == known_dist)
+
 
 if __name__ == '__main__':
   unittest.main()
